@@ -30,10 +30,10 @@ def detect_and_predict_mask(frame, faceNet):
 			(startX, startY, endX, endY) = box.astype("int")
 			(startX, startY) = (max(0, startX), max(0, startY))
 			(endX, endY) = (min(w - 1, endX), min(h - 1, endY))
-
+			
 			face = frame[startY:endY, startX:endX]
-			face = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
-			face = cv2.resize(face, (224, 224))
+			#face = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
+			#face = cv2.resize(face, (224, 224))
 			face = img_to_array(face)
 			face = preprocess_input(face)
 			face = np.expand_dims(face, axis=0)
@@ -45,69 +45,43 @@ def detect_and_predict_mask(frame, faceNet):
 
 	return (locs)
 
-class VideoStream:
-    """Camera object that controls video streaming from the Picamera"""
-    def __init__(self,resolution=(640,480),framerate=30):
-        # Initialize the PiCamera and the camera image stream
-        self.stream = cv2.VideoCapture(0)
-        ret = self.stream.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-        ret = self.stream.set(3,resolution[0])
-        ret = self.stream.set(4,resolution[1])
-            
-        # Read first frame from the stream
-        (self.grabbed, self.frame) = self.stream.read()
-
-	# Variable to control when the camera is stopped
-        self.stopped = False
-
-    def start(self):
-	# Start the thread that reads frames from the video stream
-        Thread(target=self.update,args=()).start()
-        return self
-
-    def update(self):
-        while True:
-
-            if self.stopped:
-                self.stream.release()
-                return
-
-            (self.grabbed, self.frame) = self.stream.read()
-
-    def read(self):
-        return self.frame
-
-    def stop(self):
-        self.stopped = True
-
 prototxtPath = "face_detector/deploy.prototxt"
 weightsPath = "face_detector/res10_300x300_ssd_iter_140000.caffemodel"
 
 faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
-vs = VideoStream(resolution=(400,320),framerate=30).start()
 time.sleep(1)
+i = 1
 
-while (1):
-	frame = vs.read()
-	frame = cv2.resize(frame, (400,320))
-	#frame = np.expand_dims(frame_resized, axis=0)
-	#frame = imutils.resize(frame, width=400)
+dir = "/home/pg/Desktop/CloudSaved/face_detection/dataset/masked"
+memey = "/home/pg/Desktop/CloudSaved/face_detection/dataset/masked/new"
+list = os.listdir(dir) # dir is your directory path
+'''
+picture = "{}/{:03}.PNG".format(dir, i)
+picture = cv2.imread(picture)
+print('{} {}'.format(picture, picture.shape[:2]))
 
-	#ret, huge_frame = vs.read()
-	#frame = cv2.resize(huge_frame, (480,320))
-
+'''
+for i in range(len(list) - 1):
+	i = i +1
+	picture = "{}/{:03}.PNG".format(dir, i)
+	frame = cv2.imread(picture)
+	original = frame.copy()
 	(locs) = detect_and_predict_mask(frame, faceNet)
 
+	valid = False
 	for (box) in locs:
-		(startX, startY, endX, endY) = box
-		color = (0, 0, 255)
-		frame = frame[startY:endY, startX:endX]
-		#cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+		try:
+			if(box):
+				valid = True
+			else:
+				valid = False
 
-	cv2.imshow("Frame", frame)
-	key = cv2.waitKey(1) & 0xFF
-	if key == ord("q"):
-		break
-
-cv2.destroyAllWindows()
-vs.stop()
+			#print('cor:{} i:{} name:{:03}.PNG array:{}'.format(box, i, i, valid))
+			(startX, startY, endX, endY) = box
+			img = original[startY:endY, startX:endX]
+			cv2.imwrite(picture, img)
+			print("{:03}.PNG done".format(i))
+		except:
+			pass
+		
+print("All done")
