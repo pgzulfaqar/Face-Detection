@@ -23,6 +23,7 @@ def detect_and_predict_mask(frame, faceNet):
 	locs = []
 
 	# loop over the detections
+	Belum = False
 	for i in range(0, detections.shape[2]):
 		confidence = detections[0, 0, i, 2]
 		if confidence > 0.5:
@@ -30,17 +31,20 @@ def detect_and_predict_mask(frame, faceNet):
 			(startX, startY, endX, endY) = box.astype("int")
 			(startX, startY) = (max(0, startX), max(0, startY))
 			(endX, endY) = (min(w - 1, endX), min(h - 1, endY))
-			
+			'''
 			face = frame[startY:endY, startX:endX]
-			#face = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
-			#face = cv2.resize(face, (224, 224))
+			face = cv2.cvtColor(face, cv2.COLOR_RGB2BGR)
+			face = cv2.resize(face, (224, 224))
 			face = img_to_array(face)
 			face = preprocess_input(face)
 			face = np.expand_dims(face, axis=0)
 			# add the face and bounding boxes to their respective
 			# lists
 			faces.append(face)
-			locs.append((startX, startY, endX, endY))
+			'''
+			if(Belum == False):
+				locs.append((startX, startY, endX, endY))
+				Belum = True
 
 
 	return (locs)
@@ -56,16 +60,15 @@ dir = "/home/pg/Desktop/CloudSaved/face_detection/dataset/masked"
 memey = "/home/pg/Desktop/CloudSaved/face_detection/dataset/masked/new"
 list = os.listdir(dir) # dir is your directory path
 '''
-picture = "{}/{:03}.PNG".format(dir, i)
+picture = "{}/{:03}.jpg".format(dir, i)
 picture = cv2.imread(picture)
 print('{} {}'.format(picture, picture.shape[:2]))
 
 '''
-for i in range(len(list) - 1):
+for i in range(len(list)):
 	i = i +1
 	picture = "{}/{:03}.PNG".format(dir, i)
 	frame = cv2.imread(picture)
-	original = frame.copy()
 	(locs) = detect_and_predict_mask(frame, faceNet)
 
 	valid = False
@@ -75,13 +78,15 @@ for i in range(len(list) - 1):
 				valid = True
 			else:
 				valid = False
-
+			#print("box: {} no:{}".format(box,i))
+			
 			#print('cor:{} i:{} name:{:03}.PNG array:{}'.format(box, i, i, valid))
 			(startX, startY, endX, endY) = box
-			img = original[startY:endY, startX:endX]
+			img = frame[startY:endY, startX:endX]
 			cv2.imwrite(picture, img)
 			print("{:03}.PNG done".format(i))
+			
 		except:
 			pass
-		
+
 print("All done")
